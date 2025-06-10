@@ -216,16 +216,17 @@ $allowed = [
     </div>
   </div>
 
-  <!-- Drawer de Edição (igual ao antes, sem mudança) -->
-  <div id="drawerOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
-  <div id="editDrawer"
-       class="fixed inset-y-0 right-0 w-96 bg-white shadow-lg transform translate-x-full transition-transform duration-300 overflow-auto">
-    <div class="flex justify-between items-center p-4 border-b">
-      <h2 class="text-lg font-semibold">Editar Venda</h2>
-      <button id="closeDrawer" class="text-gray-600 hover:text-gray-900">&times;</button>
-    </div>
-    <div id="drawerContent" class="p-4">
-      <!-- edit.php será carregado aqui via AJAX -->
+  <!-- Modal de Edição de Venda -->
+  <div id="editOverlay" class="fixed inset-0 bg-black bg-opacity-50 hidden"></div>
+  <div id="editModal" class="fixed inset-0 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-xl mx-4 overflow-auto">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h2 class="text-xl font-semibold">Editar Venda</h2>
+        <button id="closeEdit" class="text-gray-600 hover:text-gray-900">&times;</button>
+      </div>
+      <div id="editContent" class="p-6">
+        <!-- edit.php será carregado aqui via AJAX -->
+      </div>
     </div>
   </div>
 
@@ -243,10 +244,10 @@ $allowed = [
     const faturamentoInput= document.getElementById('faturamentoInput');
     const lucroInput      = document.getElementById('lucroInput');
 
-    const overlayEdit     = document.getElementById('drawerOverlay');
-    const drawerEdit      = document.getElementById('editDrawer');
-    const closeEditBtn    = document.getElementById('closeDrawer');
-    const contentEdit     = document.getElementById('drawerContent');
+    const overlayEdit     = document.getElementById('editOverlay');
+    const modalEdit       = document.getElementById('editModal');
+    const closeEditBtn    = document.getElementById('closeEdit');
+    const contentEdit     = document.getElementById('editContent');
 
     const tbody           = document.getElementById('vendasTableBody');
     const searchInput     = document.getElementById('searchInput');
@@ -323,7 +324,7 @@ $allowed = [
                 closeEditBtn.click();
               });
               overlayEdit.classList.remove('hidden');
-              drawerEdit.classList.remove('translate-x-full');
+              modalEdit.classList.remove('hidden');
             });
         };
       });
@@ -336,11 +337,11 @@ $allowed = [
       });
     }
 
-    // 7) Fechar drawer de edição
+    // 7) Fechar modal de edição
     [overlayEdit, closeEditBtn].forEach(el =>
       el.addEventListener('click', () => {
         overlayEdit.classList.add('hidden');
-        drawerEdit.classList.add('translate-x-full');
+        modalEdit.classList.add('hidden');
       })
     );
 
