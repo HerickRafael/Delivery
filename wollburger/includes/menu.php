@@ -42,7 +42,7 @@
   </ul>
   <?php if (isset($_SESSION['admin_user'])): ?>
     <div class="absolute bottom-0 w-full">
-      <a href="/logout.php"
+      <a href="/wollburger/logout.php"
          class="block px-4 py-2 text-red-400 hover:bg-gray-700 hover:text-red-200">
         Logout
       </a>
