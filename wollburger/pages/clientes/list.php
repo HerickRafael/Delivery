@@ -516,7 +516,27 @@ $allowed = ['nome','cpf','celular','cidade'];
             .then(res => res.text())
             .then(html => {
               contentEdit.innerHTML = html;
-              // Em edit.php, replique as máscaras/validações dos campos
+              const form = contentEdit.querySelector('#editForm');
+              if (form) {
+                form.addEventListener('submit', e => {
+                  e.preventDefault();
+                  fetch('edit.php', {
+                    method: 'POST',
+                    body: new FormData(form)
+                  })
+                    .then(r => r.json())
+                    .then(data => {
+                      if (data.success) {
+                        overlayEdit.classList.add('hidden');
+                        drawerEdit.classList.add('translate-x-full');
+                        loadClientes();
+                      } else if (data.message) {
+                        alert(data.message);
+                      }
+                    })
+                    .catch(() => alert('Erro ao atualizar cliente.'));
+                });
+              }
               document.getElementById('cancelEdit')?.addEventListener('click', () => {
                 closeEditBtn.click();
               });
