@@ -125,8 +125,9 @@ $cliente = $res->fetch_assoc();
     <label class="block mb-1">Complemento</label>
     <input name="complemento" id="complementoEdit" type="text" class="w-full p-2 border rounded" value="<?= htmlspecialchars($cliente['complemento']) ?>" />
   </div>
-  <div class="text-right">
+  <div class="flex justify-end space-x-2">
     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Salvar</button>
+    <button type="button" id="cancelEdit" class="text-gray-600 hover:underline">Cancelar</button>
   </div>
 </form>
 
@@ -140,14 +141,101 @@ function maskCelular(value) {
 function maskCEP(value) {
   return value.replace(/\D/g, "").replace(/(\d{5})(\d{3})$/, "$1-$2");
 }
+function maskNumero(value) {
+  return value.replace(/\D/g, '');
+}
 
-document.addEventListener('DOMContentLoaded', () => {
-  const cpf = document.getElementById('cpfEdit');
-  const celular = document.getElementById('celularEdit');
-  const cep = document.getElementById('cepEdit');
+function setupEditForm() {
+  const form      = document.getElementById('editForm');
+  if (!form) return;
+  const id        = form.querySelector('input[name="id"]').value;
 
-  if (cpf) cpf.addEventListener('input', e => e.target.value = maskCPF(e.target.value));
-  if (celular) celular.addEventListener('input', e => e.target.value = maskCelular(e.target.value));
-  if (cep) cep.addEventListener('input', e => e.target.value = maskCEP(e.target.value));
-});
+  const nome       = document.getElementById('nomeEdit');
+  const cpf        = document.getElementById('cpfEdit');
+  const dataNasc   = document.getElementById('dataNascimentoEdit');
+  const celular    = document.getElementById('celularEdit');
+  const cep        = document.getElementById('cepEdit');
+  const uf         = document.getElementById('ufEdit');
+  const cidade     = document.getElementById('cidadeEdit');
+  const bairro     = document.getElementById('bairroEdit');
+  const endereco   = document.getElementById('enderecoEdit');
+  const numero     = document.getElementById('numeroEdit');
+  const complemento= document.getElementById('complementoEdit');
+
+  nome?.addEventListener('input', () => nome.setCustomValidity(''));
+  cpf?.addEventListener('input', e => { e.target.value = maskCPF(e.target.value); cpf.setCustomValidity(''); });
+  dataNasc?.addEventListener('input', () => dataNasc.setCustomValidity(''));
+  celular?.addEventListener('input', e => { e.target.value = maskCelular(e.target.value); celular.setCustomValidity(''); });
+  cep?.addEventListener('input', e => { e.target.value = maskCEP(e.target.value); });
+  cep?.addEventListener('blur', e => {
+    const c = e.target.value.replace(/\D/g, '');
+    if (c.length !== 8) return;
+    fetch(`https://viacep.com.br/ws/${c}/json/`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.erro) return;
+        uf.value       = data.uf;
+        cidade.value   = data.localidade;
+        bairro.value   = data.bairro;
+        endereco.value = data.logradouro;
+        complemento.value = data.complemento || '';
+      });
+  });
+  numero?.addEventListener('input', e => { e.target.value = maskNumero(e.target.value); });
+  complemento?.addEventListener('input', () => complemento.setCustomValidity(''));
+
+  cpf?.addEventListener('blur', () => {
+    const valor = cpf.value.trim();
+    if (!valor) { cpf.setCustomValidity(''); return; }
+    fetch(`check_cpf_ajax.php?cpf=${encodeURIComponent(valor)}&id=${id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.exists) {
+          const msg = `CPF já cadastrado no contato: ${d.nome} (ID: ${d.id}).`;
+          cpf.setCustomValidity(msg); cpf.reportValidity();
+        } else {
+          cpf.setCustomValidity('');
+        }
+      })
+      .catch(() => cpf.setCustomValidity(''));
+  });
+
+  celular?.addEventListener('blur', () => {
+    const valor = celular.value.trim();
+    if (!valor) { celular.setCustomValidity(''); return; }
+    fetch(`check_celular_ajax.php?celular=${encodeURIComponent(valor)}&id=${id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.exists) {
+          const msg = `Celular já cadastrado no contato: ${d.nome} (ID: ${d.id}).`;
+          celular.setCustomValidity(msg); celular.reportValidity();
+        } else {
+          celular.setCustomValidity('');
+        }
+      })
+      .catch(() => celular.setCustomValidity(''));
+  });
+
+  form.addEventListener('submit', e => {
+    if (!form.checkValidity()) {
+      e.preventDefault();
+      form.reportValidity();
+      return;
+    }
+    const campos = [nome, cpf, dataNasc, celular, cep, uf, cidade, bairro, endereco, numero, complemento];
+    for (let campo of campos) {
+      if (campo && !campo.checkValidity()) {
+        e.preventDefault();
+        campo.reportValidity();
+        return;
+      }
+    }
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupEditForm);
+} else {
+  setupEditForm();
+}
 </script>

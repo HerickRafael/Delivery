@@ -348,6 +348,94 @@ $allowed = ['nome','cpf','celular','cidade'];
     const numeroInput     = document.getElementById('numeroInput');
     const complementoInput= document.getElementById('complementoInput');
 
+    function setupEditForm() {
+      const form       = document.getElementById('editForm');
+      if (!form) return;
+      const id         = form.querySelector('input[name="id"]').value;
+
+      const nomeEdit   = document.getElementById('nomeEdit');
+      const cpfEdit    = document.getElementById('cpfEdit');
+      const dataEdit   = document.getElementById('dataNascimentoEdit');
+      const celularEdit= document.getElementById('celularEdit');
+      const cepEdit    = document.getElementById('cepEdit');
+      const ufEdit     = document.getElementById('ufEdit');
+      const cidadeEdit = document.getElementById('cidadeEdit');
+      const bairroEdit = document.getElementById('bairroEdit');
+      const enderecoEdit = document.getElementById('enderecoEdit');
+      const numeroEdit = document.getElementById('numeroEdit');
+      const complEdit  = document.getElementById('complementoEdit');
+
+      nomeEdit?.addEventListener('input', () => nomeEdit.setCustomValidity(''));
+      cpfEdit?.addEventListener('input', e => { e.target.value = maskCPF(e.target.value); cpfEdit.setCustomValidity(''); });
+      dataEdit?.addEventListener('input', () => dataEdit.setCustomValidity(''));
+      celularEdit?.addEventListener('input', e => { e.target.value = maskCelular(e.target.value); celularEdit.setCustomValidity(''); });
+      cepEdit?.addEventListener('input', e => { e.target.value = maskCEP(e.target.value); });
+      cepEdit?.addEventListener('blur', e => {
+        const c = e.target.value.replace(/\D/g, '');
+        if (c.length !== 8) return;
+        fetch(`https://viacep.com.br/ws/${c}/json/`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.erro) return;
+            ufEdit.value      = data.uf;
+            cidadeEdit.value  = data.localidade;
+            bairroEdit.value  = data.bairro;
+            enderecoEdit.value= data.logradouro;
+            complEdit.value   = data.complemento || '';
+          });
+      });
+      numeroEdit?.addEventListener('input', e => { e.target.value = maskNumero(e.target.value); });
+      complEdit?.addEventListener('input', () => complEdit.setCustomValidity(''));
+
+      cpfEdit?.addEventListener('blur', () => {
+        const valor = cpfEdit.value.trim();
+        if (!valor) { cpfEdit.setCustomValidity(''); return; }
+        fetch(`check_cpf_ajax.php?cpf=${encodeURIComponent(valor)}&id=${id}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.exists) {
+              const msg = `CPF já cadastrado no contato: ${d.nome} (ID: ${d.id}).`;
+              cpfEdit.setCustomValidity(msg); cpfEdit.reportValidity();
+            } else {
+              cpfEdit.setCustomValidity('');
+            }
+          })
+          .catch(() => cpfEdit.setCustomValidity(''));
+      });
+
+      celularEdit?.addEventListener('blur', () => {
+        const valor = celularEdit.value.trim();
+        if (!valor) { celularEdit.setCustomValidity(''); return; }
+        fetch(`check_celular_ajax.php?celular=${encodeURIComponent(valor)}&id=${id}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.exists) {
+              const msg = `Celular já cadastrado no contato: ${d.nome} (ID: ${d.id}).`;
+              celularEdit.setCustomValidity(msg); celularEdit.reportValidity();
+            } else {
+              celularEdit.setCustomValidity('');
+            }
+          })
+          .catch(() => celularEdit.setCustomValidity(''));
+      });
+
+      form.addEventListener('submit', e => {
+        if (!form.checkValidity()) {
+          e.preventDefault();
+          form.reportValidity();
+          return;
+        }
+        const campos = [nomeEdit, cpfEdit, dataEdit, celularEdit, cepEdit, ufEdit, cidadeEdit, bairroEdit, enderecoEdit, numeroEdit, complEdit];
+        for (let campo of campos) {
+          if (campo && !campo.checkValidity()) {
+            e.preventDefault();
+            campo.reportValidity();
+            return;
+          }
+        }
+      });
+    }
+
     // ============================
     // Attach de eventos de input (máscaras)
     // ============================
@@ -516,7 +604,7 @@ $allowed = ['nome','cpf','celular','cidade'];
             .then(res => res.text())
             .then(html => {
               contentEdit.innerHTML = html;
-              // Em edit.php, replique as máscaras/validações dos campos
+              setupEditForm();
               document.getElementById('cancelEdit')?.addEventListener('click', () => {
                 closeEditBtn.click();
               });
