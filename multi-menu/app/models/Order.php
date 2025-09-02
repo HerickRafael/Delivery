@@ -1,7 +1,13 @@
 <?php
 class Order
 {
-    public static function listByCompany(PDO $db, int $companyId, ?string $status = null, int $limit = 50, int $offset = 0): array {
+    public static function listByCompany(
+        PDO $db,
+        int $companyId,
+        ?string $status = null,
+        int $limit = 50,
+        int $offset = 0
+    ): array {
         $sql = "SELECT * FROM orders WHERE company_id = :cid";
         $params = [':cid' => $companyId];
 
